@@ -1,6 +1,31 @@
-# JTA sample code for CICS Liberty JVM servers
+# Using a Liberty JVM server to co-ordinate transactions - sample code
 
-Sample code for using JTA in a CICS Liberty JVM server
+Sample code for the blog post [Using a Liberty JVM server to co-ordinate transactions](https://www.ibm.com/developerworks/community/blogs/cicsdev/entry/using_jta_transactions_in_cics_liberty_jvm_server) on CICSdev.
+
+# Dependencies
+
+* CICS TS for z/OS 5.2
+* A Liberty JVM server ([Setting up a CICS Libery JVM server server in 4 easy steps](https://www.ibm.com/developerworks/community/blogs/cicsdev/entry/liberty_jvm_servers_a_quickstart_guide))
+* A DB2 database (TODO: how does this need to be set up?)
+* *Some form of recoverable CICS resource* (TODO: decide on this)
+
+# Deploying the Sample
+
+1. Start the CICS region, DB2 and define and install the Liberty JVM server
+2. Update the server.xml of the Liberty JVM server using the [example](bin/server.xml) provided
+3. Deploy the CICS bundle to USS (either via FTP or CICS Explorer)
+4. Install the bundle
+5. View the messages.log of the Liberty JVM server to ensure the application has been enabled
+
+# Using the Sample
+
+1. Access the URL specified in the messages.log activation message (http://host:port/cics-liberty-jta/)
+2. Enter some data into the field
+3. Click run
+4. The data will be written to CICS then DB2 in turn and the transaction will commit.
+5. Enter some different data and check the rollback box
+6. Click run
+7. The data will be written to CICS then DB2 in turn, then the transaction will rollback, recovering the data in CICS and DB2 to the original values
 
 # Notice
 
