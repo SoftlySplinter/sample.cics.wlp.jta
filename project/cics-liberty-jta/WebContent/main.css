@@ -2,50 +2,60 @@
 
 body {
 	font-family: arial;
-}
-
-.header {
-	background-image: url('images/banner.jpg');
-	background-repeat: no-repeat;
-	color: white;
+	font-size: 12pt;
 }
 
 h1 {
 	color: rgb(34, 69, 125); 
 	font-style: normal; 
-	font-size: x-large; 
-	padding-top: 20px
+	padding-top: 0px
+	margin-top: 0px;
 }
 
 thead {
 	font-weight: bold;
 }
 
-A:visited {
-	color: blue;
-	text-decoration: underline;
-}
-
-A:hover {
-	color: red;
-	text-decoration: underline;
-}
-
-A:link {
-	color: blue;
-	text-decoration: underline;
-}
-
-A:active {
-	color: green;
-	text-decoration: underline;
-}
-
 #content {
 	padding-top: 10px; 
-	font-size: small;
 }
 
 .tagline {
+	color: rgb(34, 69, 125); 
 	font-weight: bold;
 }
+
+#banner {
+	background-color: rgb(238, 238, 238);
+	padding-right: 60px;
+	padding-left: 60px;
+	margin-bottom: 30px;
+	max-width: 100%;
+	border-radius: 6px;
+	box-sizing: border-box;
+	text-align: center;
+	
+}
+
+img {
+	max-height: 100%;
+	vertical-align: middle;
+	text-align: center;
+	margin: 0px;
+	padding: 0px;
+}
+
+a #banner {
+	padding-top: 10px;
+	padding-bottom: 0px;
+	margin: 0px;
+}
+
+a {
+	text-decoration: none;
+}
+
+.subtitle {
+	padding-bottom: 15px;
+}
+
