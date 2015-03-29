@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<server description="CICSdev JTA server">
+  <!-- Enable features -->
+  <featureManager>
+    <feature>jsp-2.2</feature>
+    <feature>localConnector-1.0</feature>
+    <feature>wab-1.0</feature>
+    <feature>json-1.0</feature>
+    <feature>jndi-1.0</feature>
+  </featureManager>
+
+  <!-- To access this server from a remote client add a host attribute to the following element, e.g. host="*" -->
+  <httpEndpoint httpPort="9080" httpsPort="9443" id="defaultHttpEndpoint"/>
+
+  <!-- The OSGi Application which holds the JTA sample -->
+  <osgiApplication id="cics-liberty-jta.app" location="cics-liberty-jta.app.eba" name="cics-liberty-jta.app"/>
+</server>
