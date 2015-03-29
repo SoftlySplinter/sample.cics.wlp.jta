@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="ISO-8859-1">
+		<title>CICS WebSphere Liberty profile - JTA Sample</title>
+		<link href="main.css" type="text/css" rel="stylesheet" />
+		<script type="text/javascript" src="/cics-liberty-jta/jta.js">
+		</script>
+	</head>
+	<body>
+		<div id="content">
+			<h1>CICS WebSphere Liberty profile - JTA Sample</h1>
+			<p class="tagline">
+				This sample demonstrates the use of the Java Transaction API (JTA) inside a CICS WebSphere Liberty Profile JVM server co-ordinating transactions in CICS and DB2.
+			</p>
+			<p>
+				Use the below form to submit data into CICS and DB2.
+			</p>
+			<hr />
+			<p>
+				<strong>Status:</strong> <span id="status">waiting for input</span>
+			</p>
+			<table border="1">
+				<thead>
+					<tr>
+						<td>CICS Resource</td>
+						<td>DB2 Resource</td>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td id="cics">N/A</td>
+						<td id="db2">N/A</td>
+					</tr>
+				</tbody>
+			</table>
+			<hr />
+			<form name="run" action="" method="post" onsubmit="return send_request()">
+				<table>
+					<tr>
+						<td><label for="data">Data to write:</label></td>
+						<td><input id="data" name="data" /></td>
+					</tr>
+					<tr>
+						<td><label for="rollback">Rollback?</label></td>
+						<td><input id="rollback" name="rollback" type="checkbox" /></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><button name="submit" type="submit">Run</button></td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	</body>
+</html>
