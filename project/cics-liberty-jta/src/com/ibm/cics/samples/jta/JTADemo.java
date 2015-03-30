@@ -2,7 +2,6 @@ package com.ibm.cics.samples.jta;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import javax.naming.InitialContext;
@@ -19,6 +18,18 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+
+import com.ibm.cics.server.CicsException;
+import com.ibm.cics.server.IOErrorException;
+import com.ibm.cics.server.ISCInvalidRequestException;
+import com.ibm.cics.server.InvalidQueueIdException;
+import com.ibm.cics.server.InvalidRequestException;
+import com.ibm.cics.server.InvalidSystemIdException;
+import com.ibm.cics.server.ItemErrorException;
+import com.ibm.cics.server.ItemHolder;
+import com.ibm.cics.server.LengthErrorException;
+import com.ibm.cics.server.NotAuthorisedException;
+import com.ibm.cics.server.TSQ;
 
 /**
  * Using a Liberty JVM server to co-ordinate transactions - JTA servlet.
@@ -39,9 +50,7 @@ public class JTADemo extends HttpServlet {
 	/** The DB2 data source */
 	private DataSource db2Source;
 	
-	// TODO - Remove these
-	/** Temporary */
-	String cics = null;
+	private TSQ cicsTSQ;
 
 	// TODO - Remove these
 	/** Temporary */
@@ -55,6 +64,8 @@ public class JTADemo extends HttpServlet {
 	public JTADemo() throws NamingException {
 		InitialContext init = new InitialContext();
 		ut = (UserTransaction) init.lookup("java:comp/UserTransaction");
+		cicsTSQ = new TSQ();
+		cicsTSQ.setName("CICSDEV");
 		
 		// TODO Uncomment this once DB2 is set up in server.xml
 //		db2Source = (DataSource) init.lookup("jdbc/db2");
@@ -85,14 +96,19 @@ public class JTADemo extends HttpServlet {
 			break;
 		// Get the CICS data
 		case "cics":
-			response.getWriter().print(getCICS());
+			try {
+				response.getWriter().print(getCICS());
+			} catch (CicsException e) {
+				e.printStackTrace();
+				response.getWriter().print("<span class=\"error\">Unknown</span>");
+			}
 			break;
 		// Get the DB2 data
 		case "db2":
 			response.getWriter().print(getDB2());
 			break;
 		default:
-			response.getWriter().print("Unknown");
+			response.getWriter().print("<span class=\"error\">Unknown</span>");
 		}
 		
 		// Finish the element.
@@ -108,9 +124,13 @@ public class JTADemo extends HttpServlet {
 
 	/**
 	 * @return The data in CICS
+	 * @throws CicsException 
 	 */
-	private String getCICS() {
-		return cics;
+	private String getCICS() throws CicsException {
+		ItemHolder holder = new ItemHolder();
+		int len = cicsTSQ.readItem(1, holder);
+		cicsTSQ.readItem(len, holder);
+		return holder.getStringValue();
 	}
 
 	/**
@@ -129,7 +149,7 @@ public class JTADemo extends HttpServlet {
 		String data = postData.split(",")[0];
 		String rollbackStr = postData.split(",")[1];
 		boolean rollback = Boolean.parseBoolean(rollbackStr);
-
+		
 		try {
 			// Start the transaction
 			ut.begin();
@@ -138,7 +158,7 @@ public class JTADemo extends HttpServlet {
 			
 			// Write to CICS
 			currentStatus = "Writing to CICS";
-			cics = data;
+			writeCICS(data);
 			wait5();
 			
 			// Write to DB2
@@ -160,9 +180,14 @@ public class JTADemo extends HttpServlet {
 			
 			// Reset the status
 			currentStatus = "Waiting for input";
-		} catch(NotSupportedException | SystemException | IllegalStateException | SecurityException | HeuristicMixedException | HeuristicRollbackException | RollbackException | SQLException e) {
+		} catch(NotSupportedException | SystemException | IllegalStateException | SecurityException | HeuristicMixedException | HeuristicRollbackException | RollbackException | SQLException | CicsException e) {
+			currentStatus = "<span class=\"error\">Error: " + e.getLocalizedMessage() + "</span>";
 			throw new ServletException(e);
 		}
+	}
+	
+	private void writeCICS(String data) throws CicsException {
+		cicsTSQ.writeString(data);
 	}
 	
 	private void writeDB2(String data) throws SQLException {
