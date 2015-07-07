@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="ISO-8859-1">
-	<title>Using a Liberty JVM server to co-ordinate transactions</title>
-	<link href="main.css" type="text/css" rel="stylesheet" />
-	<script type="text/javascript" src="/cics-liberty-jta/jta.js">
-		
-	</script>
+<meta charset="ISO-8859-1">
+<title>Using a Liberty JVM server to co-ordinate transactions</title>
+<link href="main.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="/cics-liberty-jta/jta.js">
+	
+</script>
 </head>
 <body>
 	<div id="banner">
@@ -22,12 +22,17 @@
 	<div id="content">
 		<p class="tagline">This sample demonstrates the use of the Java
 			Transaction API (JTA) inside a CICS WebSphere Liberty profile JVM
-			server to co-ordinate transactions involving CICS and a Type 4 DB2
-			database.</p>
-		<p>Use the below form to store data to CICS and DB2. The rollback
-			option can be used to force JTA to rollback the transaction after the
-			writes have been performed to CICS and DB2, but before those writes
-			are committed.</p>
+			server to co-ordinate transactions involving CICS and a database.</p>
+		<p>Use the below form to store data to CICS and Derby. The
+			rollback option can be used to force JTA to rollback the transaction
+			after the writes have been performed to CICS and the database, but
+			before those writes are committed.</p>
+		<p>
+			<b>Note:</b> Derby is purely used here for simplicity. Any database
+			which provides a Java EE
+			<code>DataSource</code>
+			can be used with minimal code updates.
+		</p>
 		<hr />
 		<p>
 			<strong>Status:</strong> <span id="status">Waiting for input</span>
@@ -36,13 +41,13 @@
 			<thead>
 				<tr>
 					<td>CICS Resource</td>
-					<td>DB2 Resource</td>
+					<td>Database Resource</td>
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
 					<td id="cics">N/A</td>
-					<td id="db2">N/A</td>
+					<td id="db">N/A</td>
 				</tr>
 			</tbody>
 		</table>

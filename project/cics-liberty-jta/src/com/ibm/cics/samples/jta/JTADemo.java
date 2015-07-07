@@ -2,7 +2,11 @@ package com.ibm.cics.samples.jta;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -20,22 +24,14 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
 import com.ibm.cics.server.CicsException;
-import com.ibm.cics.server.IOErrorException;
-import com.ibm.cics.server.ISCInvalidRequestException;
-import com.ibm.cics.server.InvalidQueueIdException;
-import com.ibm.cics.server.InvalidRequestException;
-import com.ibm.cics.server.InvalidSystemIdException;
-import com.ibm.cics.server.ItemErrorException;
 import com.ibm.cics.server.ItemHolder;
-import com.ibm.cics.server.LengthErrorException;
-import com.ibm.cics.server.NotAuthorisedException;
 import com.ibm.cics.server.TSQ;
 
 /**
  * Using a Liberty JVM server to co-ordinate transactions - JTA servlet.
  * <p>
  * This servlet demonstrates the use of JTA to co-ordinate transactions between
- * CICS and DB2.
+ * CICS and Database.
  */
 @WebServlet("/jta")
 public class JTADemo extends HttpServlet {
@@ -47,28 +43,58 @@ public class JTADemo extends HttpServlet {
 	/** The JTA transaction co-ordinator */
 	private UserTransaction ut;
 	
-	/** The DB2 data source */
-	private DataSource db2Source;
+	/** The Database data source */
+	private DataSource dbSource;
 	
+	/** The CICS TSQ */
 	private TSQ cicsTSQ;
 
-	// TODO - Remove these
-	/** Temporary */
-	String db2 = null;
-	
 	/**
 	 * Sets up the user transaction.
 	 * 
 	 * @throws NamingException
+	 * @throws SQLException 
 	 */
-	public JTADemo() throws NamingException {
+	public JTADemo() throws NamingException, SQLException {
 		InitialContext init = new InitialContext();
+		
+		// Look up the JTA user transaction instance
 		ut = (UserTransaction) init.lookup("java:comp/UserTransaction");
+		
+		// Create the TSQ
 		cicsTSQ = new TSQ();
 		cicsTSQ.setName("CICSDEV");
 		
-		// TODO Uncomment this once DB2 is set up in server.xml
-//		db2Source = (DataSource) init.lookup("jdbc/db2");
+		// Look up the data source
+		dbSource = (DataSource) init.lookup("jdbc/jta-db");
+		
+		// Set up the database
+		setupDB();
+	}
+	
+	/**
+	 * Create the Derby database.
+	 * 
+	 * @throws SQLException
+	 */
+	private void setupDB() throws SQLException {
+		// Get the connection
+		try(Connection conn = dbSource.getConnection()) {
+			// Create the table JTA.
+			Statement stmt = conn.createStatement();
+			stmt.executeUpdate("CREATE TABLE JTA(DATA VARCHAR(32), PRIMARY KEY(DATA))");
+
+			// Insert a default value
+			Statement insert = conn.createStatement();
+			insert.executeUpdate("INSERT INTO JTA(DATA) VALUES('N/A')");
+		} catch(SQLException e) {
+			String state = e.getSQLState();
+			
+			// Throw an exception on anything but a create fail.
+			if(!state.equals("X0Y32")) {
+				throw e;
+			}
+		}
 	}
        
 	/**
@@ -77,7 +103,7 @@ public class JTADemo extends HttpServlet {
 	 * <ol>
 	 * <li>The current status of the system</li>
 	 * <li>The current data in CICS</li>
-	 * <li>The current data in DB2</li>
+	 * <li>The current data in Database</li>
 	 * </ol>
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -103,9 +129,14 @@ public class JTADemo extends HttpServlet {
 				response.getWriter().print("<span class=\"error\">Unknown</span>");
 			}
 			break;
-		// Get the DB2 data
-		case "db2":
-			response.getWriter().print(getDB2());
+		// Get the Database data
+		case "db":
+			try {
+				response.getWriter().print(getDatabase());
+			} catch (SQLException e) {
+				e.printStackTrace();
+				response.getWriter().print("<span class=\"error\">Unknown</span>");
+			}
 			break;
 		default:
 			response.getWriter().print("<span class=\"error\">Unknown</span>");
@@ -116,14 +147,23 @@ public class JTADemo extends HttpServlet {
 	}
 	
 	/**
-	 * @return The data from DB2
+	 * @return The data from Database
+	 * @throws SQLException 
 	 */
-	private String getDB2() {
-		return db2;
+	private String getDatabase() throws SQLException {
+		try(Connection conn = dbSource.getConnection()) {
+			PreparedStatement stmt = conn.prepareStatement("SELECT * FROM JTA");
+			ResultSet results = stmt.executeQuery();
+			if(results.next()) {
+				return results.getString(1);
+			} else {
+				return "...";
+			}
+		}
 	}
 
 	/**
-	 * @return The data in CICS
+	 * @return The data from CICS
 	 * @throws CicsException 
 	 */
 	private String getCICS() throws CicsException {
@@ -134,7 +174,7 @@ public class JTADemo extends HttpServlet {
 	}
 
 	/**
-	 * Writes data to CICS and DB2 in a JTA transaction
+	 * Writes data to CICS and Database in a JTA transaction
 	 * <p>
 	 * Expects POST data in the form <code>data,rollback</code>, where data is
 	 * any string not containing a comma and rollback is a boolean to specify
@@ -161,9 +201,9 @@ public class JTADemo extends HttpServlet {
 			writeCICS(data);
 			wait5();
 			
-			// Write to DB2
-			currentStatus = "Writing to DB2";
-			writeDB2(data);
+			// Write to Database
+			currentStatus = "Writing to Database";
+			writeDatabase(data);
 			wait5();
 			
 			if(rollback) {
@@ -190,12 +230,10 @@ public class JTADemo extends HttpServlet {
 		cicsTSQ.writeString(data);
 	}
 	
-	private void writeDB2(String data) throws SQLException {
-		db2 = data;
-		
-//		PreparedStatement stmt = db2Source.getConnection().prepareStatement("UPDATE jta SET DATA = ?");
-//		stmt.setString(1, data);
-//		stmt.execute();
+	private void writeDatabase(String data) throws SQLException {
+		PreparedStatement stmt = dbSource.getConnection().prepareStatement("UPDATE JTA SET DATA = ?");
+		stmt.setString(1, data);
+		stmt.execute();
 	}
 	
 	/**
@@ -203,7 +241,7 @@ public class JTADemo extends HttpServlet {
 	 */
 	private void wait5() {
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

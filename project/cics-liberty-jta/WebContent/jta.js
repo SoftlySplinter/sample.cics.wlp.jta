@@ -2,12 +2,23 @@
  * Manages calls to the JTA servlet
  */
 
+/** The current status */
 var status = "";
+
+/** If the transaction is running */
 var running = false;
 
+/**
+ * Update the status.
+ * 
+ * A callback from a XMLHttpRequest.
+ */
 function update_status() {
+	// Ensure the request is done
 	if (this.readyState = this.DONE) {
+		// Ensure the status was 200 OK
 		if (this.status == 200) {
+			// Ensure the response XML is present and contains the correct elements
 			if (this.responseXML != null
 					&& this.responseXML.getElementsByTagName('response') != null
 					&& this.responseXML.getElementsByTagName('response')[0] != null
@@ -18,11 +29,18 @@ function update_status() {
 				status = "Unknown";
 			}
 
+			// Update the status in the web page.
 			document.getElementById('status').innerHTML = status;
 		}
 	}
 }
-function update_db2() {
+
+/**
+ * Updates the web page with the response to update the database.
+ * 
+ * A callback from a XMLHttpRequest
+ */
+function update_db() {
 	if (this.readyState = this.DONE) {
 		if (this.status == 200) {
 			if (this.responseXML != null
@@ -30,14 +48,19 @@ function update_db2() {
 					&& this.responseXML.getElementsByTagName('response')[0] != null
 					&& this.responseXML.getElementsByTagName('response')[0].textContent) {
 				// Update the current status.
-				document.getElementById('db2').innerHTML = this.responseXML
-						.getElementsByTagName('response')[0].textContent;
+				document.getElementById('db').innerHTML = this.responseXML.getElementsByTagName('response')[0].textContent;
 			} else {
-				document.getElementById('db2').innerHTML = '<span class="error">Unknown</span>';
+				document.getElementById('db').innerHTML = '<span class="error">Unknown</span>';
 			}
 		}
 	}
 }
+
+/**
+ * Updates the web page with the response to update CICS.
+ * 
+ * A callback from a XMLHttpRequest
+ */
 function update_cics() {
 	if (this.readyState = this.DONE) {
 		if (this.status == 200) {
@@ -46,8 +69,7 @@ function update_cics() {
 					&& this.responseXML.getElementsByTagName('response')[0] != null
 					&& this.responseXML.getElementsByTagName('response')[0].textContent) {
 				// Update the current status.
-				document.getElementById('cics').innerHTML = this.responseXML
-						.getElementsByTagName('response')[0].textContent;
+				document.getElementById('cics').innerHTML = this.responseXML.getElementsByTagName('response')[0].textContent;
 			} else {
 				document.getElementById('cics').innerHTML = '<span class="error">Unknown</span>';
 			}
@@ -55,6 +77,9 @@ function update_cics() {
 	}
 }
 
+/**
+ * Get the status from the JTA servlet.
+ */
 function get_status() {
 	if (!running) {
 		return;
@@ -66,13 +91,14 @@ function get_status() {
 	client.open('GET', url);
 	client.send();
 
-	if (status === 'Writing to DB2' || status === 'Committing'
-			|| status === 'Rolling back') {
-		url = '/cics-liberty-jta/jta?type=db2';
-		var db2_client = new XMLHttpRequest();
-		db2_client.onreadystatechange = update_db2;
-		db2_client.open('GET', url);
-		db2_client.send();
+	if (status === 'Writing to Database' 
+	     || status === 'Committing'
+	     || status === 'Rolling back') {
+		url = '/cics-liberty-jta/jta?type=db';
+		var db_client = new XMLHttpRequest();
+		db_client.onreadystatechange = update_db;
+		db_client.open('GET', url);
+		db_client.send();
 	}
 
 	if (status === 'Writing to CICS' || status === 'Committing'
