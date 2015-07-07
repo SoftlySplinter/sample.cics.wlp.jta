@@ -12,18 +12,12 @@
     <httpEndpoint host="*" httpPort="9080" httpsPort="9443" id="defaultHttpEndpoint"/>
 
     <osgiApplication id="cics-liberty-jta.app" location="cics-liberty-jta.app.eba" name="cics-liberty-jta.app"/>
-    <dataSource jndiName="jdbc/db2">
-    	<jdbcDriver libraryRef="db2Lib" />
-    	<!--  Update the following properties to the correct values -->
-    	<properties.db2.jcc driverType="4"
-                            serverName="DBSERVER" 
-                            portNumber="DBPORT" 
-                            databaseName="DBNAME"
-                            user="DBUSER" 
-                            password="DBPASS" />
+    <dataSource id="ds1" jndiName="jdbc/jta-db">
+    	<jdbcDriver>
+    		<library>
+                <fileset dir="/path/to/derby/" includes="derby.jar"/>
+            </library>
+    	</jdbcDriver>
+    	<properties.derby.embedded createDatabase="create" databaseName="data/jta"/>
     </dataSource>
-    <library id="db2Lib">
-    	<fileset dir="/usr/lpp/db2v11/jdbc/classes" includes="db2jcc4.jar db2jcc_license_cisuz.jar"></fileset>
-    	<fileset dir="/usr/lpp/db2v11/jdbc/lib"></fileset>
-    </library>
 </server>
